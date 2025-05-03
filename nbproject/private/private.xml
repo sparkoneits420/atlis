@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/build/ObjectBuilder.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/add/AddObject.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/GameObject.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/PacketManager.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/cache/tiles/grass.png</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/Screen.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/ui/InputField.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/Animation.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/add/AddNPC.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/UpdateFlag.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/net/PacketSender.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/SessionPool.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/LoginProtocol.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/net/packets/RegionData.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/net/PacketManager.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/NPC.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/MapEditor.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/tsk/TaskPool.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/SessionState.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/util/Constants.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/Player.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/net/Session.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/util/Utilities.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/net/PacketBuilder.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/Entity.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/security/RSA.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/Tile.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/lstn/MouseManager.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/util/path/PathFinder.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/readme.txt</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/ui/Component.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/Session.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/PacketSender.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/net/sql/Database.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/tsk/Task.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/cache/tiles/stone.png</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/ui/LoginScreen.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/build/NPCBuilder.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/security/ISAAC.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/lstn/KeyManager.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/util/Log.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/server/Server.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/net/SessionState.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/Client.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/model/Region.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/.gitignore</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/client/ui/Button.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/common/net/Packet.java</file>
+            <file>file:/C:/Users/spark/OneDrive/Documents/NetBeansProjects/2D%20Game/src/org/atlis/editor/Screen.java</file>
+        </group>
+    </open-files>
+</project-private>

@@ -1,0 +1,4 @@
+[2:37 PM - Apr 27 2025]: 
+{Login response opcode: 2}
+{Login response opcode: 2}
+{Unhandled packet: 0, size: 0}
