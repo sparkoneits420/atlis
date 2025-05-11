@@ -20,7 +20,7 @@ public class Constants {
     
     public static final byte PLEASE_REGISTER = 0x04;
     
-    public static final int BUFFER_SIZE = 1024;
+    public static final int BUFFER_SIZE = 256;
     
     public static final Map<String, Integer> DIRECTION_MAP = Map.of(
         "north", 0,
@@ -28,8 +28,10 @@ public class Constants {
         "east",  2,
         "west",  3
     );
+    
+    public static final int MAXIMUM_RENDERABLE_PLAYERS = 500;
 
-    public static final String FONT = "Calibri";
+    public static final String FONT = "Ariel";
     
     /**
      * The title of the game
@@ -40,7 +42,7 @@ public class Constants {
      * The rate at which actions take place i.e. attacks, 
      * skill actions, etc
      */
-    public static final long PARSING_INTERVAL = 250;
+    public static final long PARSING_INTERVAL = 50;
     
     /**
      * The rate the game screen repaints at

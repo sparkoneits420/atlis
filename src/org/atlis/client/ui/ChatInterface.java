@@ -5,6 +5,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.atlis.client.Client;
+import org.atlis.common.util.Log;
 
 public class ChatInterface extends Component implements KeyListener, MouseListener, MouseWheelListener {
 
@@ -25,8 +26,8 @@ public class ChatInterface extends Component implements KeyListener, MouseListen
     }
 
     public void resizeToWindow(int windowWidth, int windowHeight) {
-        this.width = windowWidth / 3;
-        this.height = windowHeight / 4;
+        this.width = windowWidth / 4;
+        this.height = windowHeight / 7;
         this.x = 20;
         this.y = windowHeight - height - 20;
     }
@@ -159,7 +160,7 @@ public class ChatInterface extends Component implements KeyListener, MouseListen
     }
 
     private void sendChatMessage(String msg) {
-        System.out.println("Sending chat: " + msg);
+        Log.print("Sending chat: " + msg);
         messages.add("You: " + msg);
     }
 }

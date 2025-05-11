@@ -1,0 +1,19 @@
+{-6592774800128}
+{-6597069766656}
+{Attempting to handle outgoing packet: 1}
+{-6597069765888}
+{File doesn't exist: C:\Users\spark\OneDrive\Documents\NetBeansProjects\2D Game\cache\mapdata\-6597069765888.xml}
+{No region found to send: -6597069765888}
+{-3294239916800}
+{-3298534883328}
+{-3298534882560}
+{4294966528}
+{Attempting to handle outgoing packet: 1}
+{Attempting to handle outgoing packet: 1}
+{Attempting to handle outgoing packet: 1}
+{Attempting to handle outgoing packet: 1}
+{0}
+{Attempting to handle outgoing packet: 1}
+{Attempting to handle outgoing packet: 1}
+{768}
+{Attempting to handle outgoing packet: 1}

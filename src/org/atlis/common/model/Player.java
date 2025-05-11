@@ -3,11 +3,13 @@ package org.atlis.common.model;
 import java.awt.Image;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.atlis.common.util.Constants;
+import org.atlis.common.util.Log;
 import org.atlis.common.util.Utilities;
 import org.atlis.common.util.XMLPersistence;
 import org.atlis.server.Server;
@@ -15,8 +17,8 @@ import org.atlis.server.Server;
 public class Player extends Entity {
 
     public static final long serialVersionUID = 232L;
- 
-    public String username, password; 
+
+    public String username, password;
     public boolean moved, moving;
     public Animation[] walkAnim;
     public Animation current;
@@ -26,16 +28,16 @@ public class Player extends Entity {
     public int walkDirection;
     public long regionRequest;
     public boolean collision = false;
-    public HashMap<Long, Region> currentRegions; 
-    public boolean regionRequested = false; 
+    public HashMap<Long, Region> currentRegions;
+    public boolean regionRequested = false;
     public int lastRegionX;
-    public int lastRegionY; 
+    public int lastRegionY;
 
     public Player() {
-        super(); 
+        super();
         //this.region = (Region) XMLPersistence.load(Constants.CACHE_DIR + "/mapdata/" + regionId + ".map");
         this.updateFlags = new ConcurrentLinkedQueue<>();
-        this.currentRegions = new HashMap<>(); 
+        this.currentRegions = new HashMap<>();
         try {
             walkAnim = new Animation[24];
             //TODO: load this as an update packet under appearance update flag
@@ -49,29 +51,29 @@ public class Player extends Entity {
         }
     }
 
-    public void generateSurroundingRegions() {
-        List<Long> visibleRegions = getVisibleRegions();
-        Map<Long, Region> cache = Server.getCachedRegions();
-
+    public void sgenerateSurroundingRegions() {
+        List<Long> visibleRegions = getVisibleRegions(); 
+       // Log.print(Arrays.toString(visibleRegions.toArray()));
         for (long rid : visibleRegions) {
-            Region aRegion = cache.get(rid);
+            //Log.print(rid);
+            Region aRegion = currentRegions.get(rid);
             if (aRegion == null) {
                 aRegion = (Region) XMLPersistence.loadXML(Constants.CACHE_DIR + "/mapdata/" + rid + ".xml");
                 if (aRegion == null) {
-                    System.out.println("Region MISSING: " + rid);
+                    Log.print("Region MISSING: " + rid);
                     continue;
                 }
-                cache.put(aRegion.getId(), aRegion);
+                currentRegions.putIfAbsent(aRegion.getId(), aRegion); 
             }
         }
-
+ 
         // Set player's current region
         long currentRegionId = getCurrentRegionId();
-        Region currentRegion = cache.get(currentRegionId);
+        Region currentRegion = currentRegions.get(currentRegionId);
         if (currentRegion != null) {
             this.region = currentRegion;
         } else {
-            System.out.println("Warning: Current region not found in cache: " + currentRegionId);
+            Log.print("Warning: Current region not found in cache: " + currentRegionId);
         }
     }
 
@@ -80,24 +82,24 @@ public class Player extends Entity {
 
         int regionSize = Constants.REGION_SIZE;
 
-        // Find the base region the player is inside
-        int playerRegionX = Math.floorDiv(x, regionSize) * regionSize;
-        int playerRegionY = Math.floorDiv(y, regionSize) * regionSize;
-
+        // Find the base region the player is inside (grid coordinates)
+        int playerRegionX = Math.floorDiv(x, regionSize);
+        int playerRegionY = Math.floorDiv(y, regionSize);
+ 
         int loadDistance = 1;
 
         for (int dx = -loadDistance; dx <= loadDistance; dx++) {
             for (int dy = -loadDistance; dy <= loadDistance; dy++) {
-                int regionX = playerRegionX + (dx * regionSize);
-                int regionY = playerRegionY + (dy * regionSize);
-                visible.add(Utilities.intsToLong(regionX, regionY)); 
+                int regionX = (playerRegionX + dx) * regionSize; // back to pixel coords
+                int regionY = (playerRegionY + dy) * regionSize; // back to pixel coords
+                //Log.print(regionX + ", " + regionY);
+                visible.add(Utilities.intsToLong(regionX, regionY));
             }
         }
-        //System.out.println(Arrays.toString(visible.toArray()));
 
         return visible;
     }
- 
+
     public boolean requiresRegionalUpdate() {
         int size = Constants.REGION_SIZE;
         int currentRegionX = (x / size) * size;
@@ -132,21 +134,10 @@ public class Player extends Entity {
                 && y >= regionY && y < regionY + regionSize;
     }
 
-    public long getCurrentRegionId() {
-        int regionSize = Constants.REGION_SIZE;
-
-        int regionX = Math.floorDiv(x, regionSize) * regionSize;
-        int regionY = Math.floorDiv(y, regionSize) * regionSize;
-        //System.out.println("RegionX: " + regionX + " RegionY: " + regionY);
-        long l = Utilities.intsToLong(regionX, regionY);
-        //System.out.println("RegionId: " + l);
-        return l;
-    }
-
     public HashMap<Long, Region> getCurrentRegions() {
         return currentRegions;
     }
- 
+
     public void setRegionRequest(long regionId) {
         this.regionRequest = regionId;
     }
@@ -185,6 +176,5 @@ public class Player extends Entity {
 
     public void setPassword(String password) {
         this.password = password;
-    }
- 
-}
+    } 
+} 

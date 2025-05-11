@@ -2,8 +2,10 @@ package org.atlis.client.net.packets;
  
 import org.atlis.client.net.Session;
 import org.atlis.common.model.GameObject;
+import org.atlis.common.model.Player;
 import org.atlis.common.model.Region; 
 import org.atlis.common.net.Packet; 
+import org.atlis.common.util.Log;
 import org.atlis.common.util.Utilities;
 
 /**
@@ -17,6 +19,9 @@ public class RegionData implements PacketListener {
 
     @Override
     public void handle(Packet p, Session session) {
+        Player player = session.getPlayer();
+        player.setX(p.getInt());
+        player.setY(p.getInt());
         long regionId = p.getLong();
         int tileLength = p.getShort();
         int[] xy = Utilities.longToInts(regionId);
@@ -26,12 +31,12 @@ public class RegionData implements PacketListener {
             region.get(Utilities.intsToLong(x, y))
                     .setType(p.getByte());
         } 
-        if(session.getPlayer().getVisibleRegions().contains(regionId)) { 
-            session.getPlayer().getCurrentRegions().put(regionId, region);
+        if(player.getVisibleRegions().contains(regionId)) { 
+            player.getCurrentRegions().put(regionId, region);
         }
-        
-        if(session.getPlayer().withinRegion(regionId))
-            session.getPlayer().setRegion(region);
+        Log.print("Received: " + regionId);
+        if(player.withinRegion(regionId))
+            player.setRegion(region);
         session.getCachedRegions().put(regionId, region);
         int count = p.getByte();
         for(int i = 0; i < count; i++) {
@@ -39,7 +44,7 @@ public class RegionData implements PacketListener {
             int y = p.getInt();
             int width = p.getInt();
             int height = p.getInt();
-            System.out.println(width + ", " + height);
+            Log.print(width + ", " + height);
             int length = p.getByte();
             String[] dirs = new String[length];
             for(int j = 0; j < length; j++) {

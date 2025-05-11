@@ -9,13 +9,15 @@ import static org.atlis.common.model.Tile.GRASS;
 import static org.atlis.common.model.Tile.STONE;
 import org.atlis.common.model.GameObject;
 import org.atlis.common.model.Region;
-import org.atlis.common.model.Tile;
+import org.atlis.common.model.Tile; 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.*;
+import org.xml.sax.SAXException;
 
 public class XMLPersistence {
 
@@ -25,13 +27,13 @@ public class XMLPersistence {
             if (!file.exists()) {
                 file.createNewFile();
             }
-            FileOutputStream out = new FileOutputStream(file);
-            for (String s : strings) {
-                out.write(s.getBytes());
-                out.write('\n');
+            try (FileOutputStream out = new FileOutputStream(file)) {
+                for (String s : strings) {
+                    out.write(s.getBytes());
+                    out.write('\n');
+                }
             }
-            out.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -107,8 +109,11 @@ public class XMLPersistence {
             StreamResult result = new StreamResult(new File(Constants.CACHE_DIR + "/mapdata/" + region.getId() + ".xml"));
 
             transformer.transform(source, result);
-            System.out.println("Saved region successfully.. (pretty printed)");
-        } catch (Exception ex) {
+            Log.print("Saved region successfully.. (pretty printed)");
+        } catch (IllegalArgumentException
+                | ParserConfigurationException
+                | TransformerException
+                | DOMException ex) {
             ex.printStackTrace();
         }
     }
@@ -117,7 +122,7 @@ public class XMLPersistence {
         try {
             File xmlFile = new File(filePath);
             if (!xmlFile.exists()) {
-                System.out.println("File doesn't exist: " + xmlFile.getPath());
+                Log.print("File doesn't exist: " + xmlFile.getPath());
                 return null;
             }
 
@@ -161,10 +166,70 @@ public class XMLPersistence {
             }
 
             return region;
-        } catch (Exception ex) {
+        } catch (IOException
+                | NumberFormatException
+                | ParserConfigurationException
+                | SAXException ex) {
             ex.printStackTrace();
         }
-        System.out.println("Couldn't load region");
+        Log.print("Couldn't load region");
         return null;
     }
+
+    public static void saveObject(GameObject obj, File outFile) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            org.w3c.dom.Document doc = db.newDocument();
+            org.w3c.dom.Element root = doc.createElement("object");
+            doc.appendChild(root);
+
+            root.setAttribute("x", Integer.toString(obj.getX()));
+            root.setAttribute("y", Integer.toString(obj.getY()));
+            root.setAttribute("width", Integer.toString(obj.getWidth()));
+            root.setAttribute("height", Integer.toString(obj.getHeight()));
+            root.setAttribute("animated", Boolean.toString(obj.isAnimated()));
+            root.setAttribute("loop", Boolean.toString(obj.loop));
+            root.setAttribute("frameDuration", Integer.toString(obj.frameDuration));
+            root.setAttribute("dirs", String.join(",", obj.dirs));
+
+            javax.xml.transform.Transformer tf = javax.xml.transform.TransformerFactory.newInstance().newTransformer();
+            tf.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            tf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+            javax.xml.transform.dom.DOMSource source = new javax.xml.transform.dom.DOMSource(doc);
+            javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(outFile);
+            tf.transform(source, result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static GameObject loadObject(File file) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            org.w3c.dom.Document doc = db.parse(file);
+            doc.getDocumentElement().normalize();
+
+            org.w3c.dom.Element root = (org.w3c.dom.Element) doc.getElementsByTagName("object").item(0);
+
+            int x = Integer.parseInt(root.getAttribute("x"));
+            int y = Integer.parseInt(root.getAttribute("y"));
+            int width = Integer.parseInt(root.getAttribute("width"));
+            int height = Integer.parseInt(root.getAttribute("height"));
+            boolean animated = Boolean.parseBoolean(root.getAttribute("animated"));
+            boolean loop = Boolean.parseBoolean(root.getAttribute("loop"));
+            int frameDuration = Integer.parseInt(root.getAttribute("frameDuration"));
+            String[] dirs = root.getAttribute("dirs").split(",");
+
+            GameObject obj = new GameObject(x, y, width, height, animated, dirs);
+            obj.loop = loop;
+            obj.frameDuration = frameDuration;
+            return obj;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } 
+    } 
 }

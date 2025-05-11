@@ -1,4 +1,4 @@
-package org.atlis.editor.add;
+package org.atlis.mapeditorold.add;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +8,7 @@ import java.util.Objects;
 import org.atlis.common.model.NPC;
 import org.atlis.common.util.Constants;
 import org.atlis.common.util.Utilities;
-import org.atlis.editor.Screen;
+import org.atlis.mapeditorold.Screen;
 
 public class AddNPC extends JFrame {
 

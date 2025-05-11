@@ -57,8 +57,8 @@ public class LoginScreen {
         username.focused = true;
         components.add(password = new InputField(0, 0, 171, 23));
         password.passwordField = true; 
-        username.setText("tater pie"); 
         password.setText(System.getProperty("DB_PASS"));
+        username.setText("tater pie");  
         components.add(loginButton = new Button(0, 0, BUTTON.getWidth(),
                 BUTTON.getHeight(), BUTTON,
                 BUTTON_HOVER, BUTTON_P, "LOGIN") {
@@ -68,8 +68,7 @@ public class LoginScreen {
                     message = "Please enter a username.";
                 } else if (password.getText() == null || username.getText().isBlank()) {
                     message = "Please enter a password.";
-                } else if (screen.getSession().player == null) {
-                    //System.out.println("wtf");
+                } else if (screen.getSession().player == null) { 
                     screen.getSession().connect(username.getText(), password.getText()); 
                 }
             }

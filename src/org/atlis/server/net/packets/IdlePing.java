@@ -13,6 +13,6 @@ public class IdlePing implements PacketListener {
 
     @Override
     public void handle(Packet p, Session session) {
-       // System.out.println("idle packet handled");
+       // Log.print("idle packet handled");
     } 
 }

@@ -36,8 +36,6 @@ public class Tile extends Entity {
     }
 
     public Image getImage() {
-        if(XMLPersistence.getTileImages() == null)
-            return null;
         return XMLPersistence.getTileImages().get(type);
     }
 

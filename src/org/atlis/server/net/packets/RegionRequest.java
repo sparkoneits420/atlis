@@ -13,9 +13,8 @@ public class RegionRequest implements PacketListener {
 
     @Override
     public void handle(Packet p, Session session) {
-        long regionId = p.getLong();
-        //Server.getLog().put("Region requested: " + regionId);
-        session.getPlayer().getUpdateFlags().add(UpdateFlag.REGION);
+        long regionId = p.getLong();  
         session.getPacketSender().sendRequestedRegion(regionId);
+        //Log.print(regionId);
     }
 }

@@ -1,4 +1,4 @@
-package org.atlis.editor.build;
+package org.atlis.mapeditorold.build;
 
 import javax.swing.*;
 import java.awt.*; 

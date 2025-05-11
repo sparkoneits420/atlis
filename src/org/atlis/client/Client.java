@@ -26,19 +26,14 @@ import org.atlis.common.util.Utilities;
 
 public class Client extends JFrame {
 
-    public static ExecutorService executor;
-    public static TaskPool taskPool;
-    public static Screen screen;
-    public static Log log;
+    public static ExecutorService executor; 
+    public static Screen screen; 
     public static Client client;
 
     public Client(boolean extended) {
         super(Constants.GAME_TITLE);
-        executor = Executors.newCachedThreadPool();
-        taskPool = new TaskPool();
-        log = new Log();
-        executor.submit(taskPool);
-        
+        executor = Executors.newCachedThreadPool();  
+        TaskPool.start();
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -48,8 +43,7 @@ public class Client extends JFrame {
             }
         } catch (Exception e) {
             // If Nimbus is not available, you can set the GUI to another look and feel.
-        }
-        taskPool.add(log);
+        } 
         if (!extended) {
             initComponents();
         }
@@ -108,15 +102,7 @@ public class Client extends JFrame {
         addKeyListener(chat);
         addMouseWheelListener(chat);
         
-    }
-
-    public static Log getLog() {
-        return log;
-    }
-
-    public static TaskPool getTaskPool() {
-        return taskPool;
-    }
+    } 
 
     public static Screen getScreen() {
         return screen;
@@ -132,5 +118,5 @@ public class Client extends JFrame {
     public static ExecutorService getThreadPool() {
         return executor;
     }
-
+ 
 }

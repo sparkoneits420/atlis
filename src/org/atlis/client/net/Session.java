@@ -5,32 +5,30 @@ import java.io.ByteArrayOutputStream;
 import org.atlis.common.security.ISAAC;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
+import java.io.DataOutputStream; 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ConcurrentLinkedQueue; 
 import org.atlis.client.Client;
 import org.atlis.common.model.Player;
 import org.atlis.common.model.Region;
 import org.atlis.common.net.Packet;
 import org.atlis.common.net.PacketBuilder;
 import org.atlis.common.security.RSA;
-import org.atlis.common.util.Constants;
-import org.atlis.common.util.Utilities;
+import org.atlis.common.tsk.Task;
+import org.atlis.common.tsk.TaskPool;
+import org.atlis.common.util.Constants; 
+import org.atlis.common.util.Log;
 import org.atlis.server.Server;
 
-public class Session {
+public class Session extends Task {
 
     public Socket socket;
     public DataInputStream in;
@@ -44,21 +42,23 @@ public class Session {
     public PacketSender sender;
     public HashMap<Long, Region> cachedRegions;
     public String username, password;
+    public HashMap<Long, Player> players;
 
     public boolean[] keys;
 
     public Session() {
+        super(Constants.PARSING_INTERVAL);
         outgoingPacketQueue = new ConcurrentLinkedQueue<>();
         cachedRegions = new HashMap<>();
         keys = new boolean[128];
+        players = new HashMap<>(Constants.MAXIMUM_RENDERABLE_PLAYERS);
     }
 
-    public void update() {
-        if (getState() == SessionState.CONNECTED) {
-            boolean running = keys[KeyEvent.VK_SHIFT];
-
-            if (keys[KeyEvent.VK_W] || keys[KeyEvent.VK_UP]) {
-                player.setRunning(running);
+    @Override
+    public void execute() {
+        if (getState() == SessionState.CONNECTED) { 
+            player.setRunning(keys[KeyEvent.VK_SHIFT]);
+            if (keys[KeyEvent.VK_W] || keys[KeyEvent.VK_UP]) { 
                 getPacketSender().sendMovementRequest(0);
                 if (!player.collision) {
                     player.y -= player.isRunning() ? Constants.RUN_SPEED : Constants.WALK_SPEED;
@@ -69,7 +69,7 @@ public class Session {
 
             }
             if (keys[KeyEvent.VK_S] || keys[KeyEvent.VK_DOWN]) {
-                player.setRunning(running);
+                
                 getPacketSender().sendMovementRequest(1);
                 if (!player.collision) {
                     player.y += player.isRunning() ? Constants.RUN_SPEED : Constants.WALK_SPEED;
@@ -79,8 +79,7 @@ public class Session {
                 }
 
             }
-            if (keys[KeyEvent.VK_A] || keys[KeyEvent.VK_LEFT]) {
-                player.setRunning(running);
+            if (keys[KeyEvent.VK_A] || keys[KeyEvent.VK_LEFT]) { 
                 getPacketSender().sendMovementRequest(2);
                 if (!player.collision) {
                     player.x -= player.isRunning() ? Constants.RUN_SPEED : Constants.WALK_SPEED;
@@ -90,8 +89,7 @@ public class Session {
                 }
 
             }
-            if (keys[KeyEvent.VK_D] || keys[KeyEvent.VK_RIGHT]) {
-                player.setRunning(running);
+            if (keys[KeyEvent.VK_D] || keys[KeyEvent.VK_RIGHT]) { 
                 getPacketSender().sendMovementRequest(3);
                 if (!player.collision) {
                     player.x += player.isRunning() ? Constants.RUN_SPEED : Constants.WALK_SPEED;
@@ -112,7 +110,7 @@ public class Session {
 
             login(username, password);
         } catch (IOException e) {
-            Client.getLog().put("Failed to establish connection: " + e.getMessage());
+            Log.print("Failed to establish connection: " + e.getMessage());
         }
     }
 
@@ -149,31 +147,31 @@ public class Session {
             //Client.getLog().put("Login response opcode: " + opcode);
             if (opcode == Constants.LOGIN_SUCCESS) {
                 getSocket().setTcpNoDelay(true);
-                getSocket().setKeepAlive(true);
-                long serverSeed = getInputStream().readLong();
-                //System.out.println("Server seed: " + serverSeed);
-                ISAAC encryptor = new ISAAC(RSA.generateSeedArray(clientSeed));
-                ISAAC decryptor = new ISAAC(RSA.generateSeedArray(serverSeed));
-                setCiphers(encryptor, decryptor);
-                //setSession(session);
-
+                //getSocket().setKeepAlive(true);
+                long serverSeed = getInputStream().readLong(); 
+                //Log.print("Server seed: " + serverSeed);
+                encryptor = new ISAAC(RSA.generateSeedArray(clientSeed));
+                decryptor = new ISAAC(RSA.generateSeedArray(serverSeed));   
                 player = new Player();
                 player.setUsername(username);
                 player.setPassword(password);
+                player.setX(in.readInt());
+                player.setY(in.readInt());
+                
                 setState(SessionState.CONNECTED);
                 sender = new PacketSender(this, encryptor);
-                // System.out.println("hmmmmm");
-
-                Server.executor.submit(() -> {
+                // Log.print("hmmmmm");  
+                TaskPool.add(this);
+                Client.executor.submit(() -> {
                     while (getState() == SessionState.CONNECTED) {
                         currentTime = System.currentTimeMillis();
                         if (currentTime - lastExecution >= Constants.PARSING_INTERVAL) {
-                            handleIO();
+                            handleIO(); 
                             lastExecution = currentTime;
                             //sender.sendIdlePacket();
                         } else {
                             try {
-                                Thread.sleep(100);
+                                Thread.sleep(10); 
                             } catch (InterruptedException ex) {
                                 System.err.println("Could not sleep for session");
                             }
@@ -184,20 +182,20 @@ public class Session {
                 switch (opcode) {
                     case Constants.LOGIN_FAILURE_INVALID_CREDENTIALS -> {
                         Client.getScreen().loginScreen.setMessage("Invalid username or password.");
-                        System.out.println("Invalid username or password.");
+                        Log.print("Invalid username or password.");
                     }
                     case Constants.PLEASE_REGISTER -> {
                         Client.getScreen().loginScreen.setMessage("Please register at atlis.online");
                     }
                     default -> {
                         Client.getScreen().loginScreen.setMessage("Unknown login failure.");
-                        System.out.println("Unknown login failure.");
+                        Log.print("Unknown login failure.");
                     }
                 }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            Client.getLog().put("Problem handling IO protocol.");
+            Log.print("Problem handling IO protocol.");
         }
 
     }
@@ -206,17 +204,16 @@ public class Session {
         try {
 
             if (socket.isClosed()) {
-                Client.getLog().put("socket closed...");
+                Log.print("socket closed...");
 
             }
             if (in == null || out == null) {
-                System.out.println("In: " + in + ", out: " + out);
+                Log.print("In: " + in + ", out: " + out);
                 return;
-            }
-
+            } 
             //sender.sendIdlePacket();
             if (in.available() >= 3) { // Enough to read header
-                // System.out.println("reading");
+                // Log.print("reading");
                 //in.mark(5); 
                 int opcode = (in.readUnsignedByte() - decryptor.next()) & 0xFF;
                 int size = in.readUnsignedShort();
@@ -229,20 +226,14 @@ public class Session {
                 } else {
                     in.reset(); // Not enough data yet, wait
                 }
-            }
+            } 
             for (int i = 0; i < outgoingPacketQueue.size(); i++) {
                 PacketBuilder pb = outgoingPacketQueue.poll();
                 out.write(pb.toPacket());
             }
-        } catch (EOFException eof) {
-            System.out.println("[CLIENT] EOF reached, closing ");
-            close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            close();
-
-        }
-
+        } catch (IOException e) { 
+            close(); 
+        } 
     }
 
     public void queuePacket(PacketBuilder packet) {
@@ -256,7 +247,7 @@ public class Session {
     }
 
     public void close() {
-        System.out.println("[CLIENT] Close called manually. State: " + getState());
+        Log.print("[CLIENT] Close called manually. State: " + getState());
         setState(SessionState.DISCONNECTED);
         try {
             in.close();
@@ -319,4 +310,21 @@ public class Session {
     public HashMap<Long, Region> getCachedRegions() {
         return cachedRegions;
     }
+    
+        
+    public void addPlayer(Player player) {
+        this.players.putIfAbsent(player.getId(), player);
+    }
+    
+    public HashMap<Long, Player> getPlayers() {
+        return players;
+    }
+    
+    public void removePlayer(long id) {
+        players.remove(id);
+    }
+    
+    public Player getPlayer(long id) {
+        return players.get(id);
+    } 
 }

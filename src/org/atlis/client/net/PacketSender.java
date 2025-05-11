@@ -9,6 +9,7 @@ import org.atlis.common.model.Player;
 import org.atlis.common.model.UpdateFlag;
 import org.atlis.common.net.PacketBuilder;
 import org.atlis.common.security.ISAAC;
+import org.atlis.common.util.Log;
 
 /**
  *
@@ -31,7 +32,7 @@ public class PacketSender {
     public void sendRegionRequest(long id) {
         PacketBuilder p = new PacketBuilder(0x02, isaac); 
         p.addLong(id);  
-        //System.out.println("Sent RegionRequest for ID: " + id); 
+        Log.print("Sent RegionRequest for ID: " + id); 
         session.queuePacket(p);
     }
     
@@ -42,14 +43,5 @@ public class PacketSender {
         p.addByte((byte)(direction));
         p.addBoolean(session.getPlayer().isRunning());
         session.queuePacket(p);
-    }
-    
-    public void sendUpdateRequest(Player player) {
-        PacketBuilder p = new PacketBuilder(0x05, isaac); 
-        p.addLong(player.getId());
-        p.addByte((byte) player.getUpdateFlags().size());
-        for(UpdateFlag flag : player.getUpdateFlags()) {
-            p.addByte((byte) flag.getBit());
-        }
-    }
+    } 
 }

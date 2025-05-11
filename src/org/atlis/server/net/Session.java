@@ -1,22 +1,21 @@
 package org.atlis.server.net;
-
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-
+ 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.atlis.common.model.Player;
-import static org.atlis.common.model.UpdateFlag.WALKING;
+import org.atlis.common.model.Player; 
+import org.atlis.common.model.UpdateFlag;
+import static org.atlis.common.model.UpdateFlag.*;
 import org.atlis.common.net.Packet;
 import org.atlis.common.net.PacketBuilder;
 import org.atlis.common.security.ISAAC;
 import org.atlis.common.tsk.Task;
+import org.atlis.common.tsk.TaskPool;
 import org.atlis.common.util.Constants;
-import org.atlis.server.Server;
+import org.atlis.common.util.Log; 
 import org.atlis.server.net.SessionPool.PlayerRegistry;
 import org.atlis.server.net.sql.Database;
 
@@ -31,7 +30,7 @@ public class Session extends Task {
     public boolean startedExchange;
     public PacketSender sender;
 
-    public final ByteBuffer packetBuffer = ByteBuffer.allocate(1024); // incoming buffer
+    public final ByteBuffer packetBuffer = ByteBuffer.allocate(256); // incoming buffer
     public int expectedPacketSize = -1, currentOpcode;
 
     public Queue<PacketBuilder> outgoingPacketQueue;
@@ -60,7 +59,7 @@ public class Session extends Task {
 
             while (!outgoingPacketQueue.isEmpty()) {
                 PacketBuilder pb = outgoingPacketQueue.poll();
-                //System.out.println("Attempting to handle outgoing packet: " + pb.opcode);
+                Log.print("Attempting to handle outgoing packet: " + pb.opcode);
                 byte[] packetData = pb.toPacket();
                 ByteBuffer buffer = ByteBuffer.wrap(packetData);
 
@@ -82,12 +81,44 @@ public class Session extends Task {
     }
 
     public void update() {
+
         if (player == null || player.region == null) {
             return;
         }
 
-        // Example: WALKING
-        if (player.hasUpdateFlag(WALKING)) {
+        long myRegionId = player.getCurrentRegionId();
+
+        if (player.regionChanged()) {
+            for (Player other : PlayerRegistry.all().values()) {
+                if (other == player || other.region == null) {
+                    continue;
+                }
+
+                long otherRegionId = other.getCurrentRegionId();
+
+                boolean wasInOldRegion = player.lastRegionId == otherRegionId;
+                boolean inNewRegion = myRegionId == otherRegionId;
+
+                if (wasInOldRegion && !inNewRegion) {
+                    // Player moved out of view — remove
+                    PacketBuilder pb = new PacketBuilder(0x07, encryptor);
+                    pb.addLong(other.getId());
+                    queuePacket(pb);
+                }
+
+                if (!wasInOldRegion && inNewRegion) {
+                    // Player moved into view — add/update
+                    PacketBuilder pb = new PacketBuilder(0x05, encryptor);
+                    pb.addLong(other.getId());
+                    pb.addInt(other.getX());
+                    pb.addInt(other.getY());
+                    pb.addByte((byte) UpdateFlag.REGION.getBit());
+                    queuePacket(pb);
+                }
+            }
+        }
+
+        if (player.hasUpdateFlag(WALKING)) { 
             for (Player other : SessionPool.PlayerRegistry.all().values()) {
                 if (other == player) {
                     continue;
@@ -104,12 +135,12 @@ public class Session extends Task {
                     continue;
                 }
 
-                PacketBuilder builder = new PacketBuilder(6, encryptor); // PlayerUpdate opcode
-                builder.addLong(player.getId());
-                builder.addInt(player.getX());
-                builder.addInt(player.getY());
-                builder.addByte((byte) WALKING.getBit());
-                otherSession.queuePacket(builder);
+                PacketBuilder pb = new PacketBuilder(6, encryptor); // PlayerUpdate opcode
+                pb.addLong(player.getId());
+                pb.addInt(player.getX());
+                pb.addInt(player.getY());
+                pb.addByte((byte) WALKING.getBit());
+                otherSession.queuePacket(pb);
             }
 
         }
@@ -117,12 +148,64 @@ public class Session extends Task {
         // Future: handle other flags (APPEARANCE, CHAT, etc.)
     }
 
+    private void updateVisibility() {
+        long currentId = player.getRegionId();
+        long lastId = player.getLastRegionId();
+
+        if (currentId == lastId) {
+            return;
+        }
+
+        for (Player other : PlayerRegistry.all().values()) {
+            if (other == player || other.region == null) {
+                continue;
+            }
+
+            long otherId = other.getRegionId();
+
+            // Tell *this* player about others
+            if (lastId == otherId && currentId != otherId) {
+                PacketBuilder pb = new PacketBuilder(0x07, encryptor);
+                pb.addLong(other.getId());
+                queuePacket(pb);
+            } else if (lastId != otherId && currentId == otherId) {
+                PacketBuilder pb = new PacketBuilder(0x05, encryptor);
+                pb.addLong(other.getId());
+                pb.addInt(other.getX());
+                pb.addInt(other.getY());
+                pb.addByte((byte) REGION.getBit());
+                queuePacket(pb);
+            }
+
+            // Now tell others about *this* player
+            Session otherSession = PlayerRegistry.getSessionByPlayer(other);
+            if (otherSession == null) {
+                continue;
+            }
+
+            if (other.getLastRegionId() == currentId && other.getRegionId() != currentId) {
+                // Remove this player from their view
+                PacketBuilder pb = new PacketBuilder(0x07, otherSession.encryptor);
+                pb.addLong(player.getId());
+                otherSession.queuePacket(pb);
+            } else if (other.getLastRegionId() != currentId && other.getRegionId() == currentId) {
+                // Add this player to their view
+                PacketBuilder pb = new PacketBuilder(0x05, otherSession.encryptor);
+                pb.addLong(player.getId());
+                pb.addInt(player.getX());
+                pb.addInt(player.getY());
+                pb.addByte((byte) REGION.getBit());
+                otherSession.queuePacket(pb);
+            }
+        }
+    }
+
     public void read(SelectionKey key, ByteBuffer buffer) {
         try {
             if (getState() == SessionState.KEY_EXCHANGE || getState() == SessionState.PROTOCOL) {
                 int bytesRead = channel.read(loginBuffer);
                 if (bytesRead == -1) {
-                    System.out.println("Client closed during login: " + channel.getRemoteAddress());
+                    Log.print("Client closed during login: " + channel.getRemoteAddress());
                     SessionPool.unregister(channel);
                     key.cancel();
                     return;
@@ -133,7 +216,7 @@ public class Session extends Task {
                 if (loginReadStage == 0 && loginBuffer.remaining() >= 1) {
                     byte hello = loginBuffer.get();
                     if (hello != 0x00) {
-                        System.out.println("Unexpected hello byte: " + hello);
+                        Log.print("Unexpected hello byte: " + hello);
                         close();
                         return;
                     }
@@ -153,7 +236,6 @@ public class Session extends Task {
                 if (loginReadStage == 2 && loginBuffer.remaining() >= loginBlockLength) {
                     LoginProtocol.handle(this, loginBuffer);
                     setState(SessionState.LOGGED_IN);
-                    //System.out.println("After login handle, remaining bytes: " + loginBuffer.remaining());
                     loginBuffer.clear();
                     return;
                 }
@@ -165,14 +247,14 @@ public class Session extends Task {
             if (getState() == SessionState.LOGGED_IN) {
                 buffer.clear();
                 int bytesRead = channel.read(buffer);
-                //System.out.println("bytes read after login: " + bytesRead);
+                //Log.print("bytes read after login: " + bytesRead);
                 if (bytesRead == 0) {
                     // No data available yet, return safely
                     return;
                 }
 
                 if (bytesRead == -1) {
-                    // System.out.println("Disconnected after login: " + channel.getRemoteAddress());
+                    // Log.print("Disconnected after login: " + channel.getRemoteAddress());
                     if (getPlayer() != null) {
                         Database.savePlayer(getPlayer());
                     }
@@ -217,7 +299,7 @@ public class Session extends Task {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Session dropped for " + player.getUsername());
+            Log.print("Session dropped for " + player.getUsername());
             close();
         }
     }
@@ -227,7 +309,7 @@ public class Session extends Task {
             key.cancel();
             channel.close();
             Database.savePlayer(player);
-            Server.getTaskPool().remove(this);
+            TaskPool.remove(this);
         } catch (IOException e) {
             e.printStackTrace();
         }

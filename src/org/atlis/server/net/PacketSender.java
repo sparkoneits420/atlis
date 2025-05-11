@@ -1,14 +1,16 @@
-
+ 
 package org.atlis.server.net;
 
 import java.util.ArrayList;
-import org.atlis.common.model.GameObject;
+import org.atlis.common.model.GameObject; 
 import org.atlis.common.model.Player;
 import org.atlis.common.model.Region;
-import org.atlis.common.model.Tile;
-import org.atlis.common.model.UpdateFlag;
+import org.atlis.common.model.Tile; 
 import org.atlis.common.net.PacketBuilder;
 import org.atlis.common.security.ISAAC;
+import org.atlis.common.util.Constants;
+import org.atlis.common.util.Log;
+import org.atlis.common.util.XMLPersistence;
 import org.atlis.server.Server;
 
 /**
@@ -26,20 +28,26 @@ public class PacketSender {
     }
 
     public void sendRequestedRegion(long regionId) {
-        //System.out.println("Sending region");
-        //if(!session.getPlayer().regionRequested)
-            session.getPlayer().generateSurroundingRegions();
-
+        Log.print(String.valueOf(regionId));
+        Player player = session.getPlayer(); 
         Region region = Server.getCachedRegions().get(regionId); 
-        if(session.getPlayer().withinRegion(regionId))
-            session.getPlayer().setRegion(region);
-        if (region == null) {
-            System.out.println("No region found to send.");
-            return;
+
+        if (region == null)  {
+            region = (Region) XMLPersistence.loadXML(Constants.CACHE_DIR + "/mapdata/" + regionId + ".xml"); 
+            if(region != null) Server.getCachedRegions().putIfAbsent(regionId, region);
         }
-
+        if (region == null) {
+            Log.print("No region found to send: " + regionId);
+            return;
+        } 
+        if(player.withinRegion(regionId))
+            player.setRegion(region);
+        
         PacketBuilder packet = new PacketBuilder(0x01, isaac);
-
+        
+        packet.addInt(player.x);
+        packet.addInt(player.y);
+        
         packet.addLong(region.getId());
         ArrayList<Tile> nonDefTiles = new ArrayList<>();
         for (Tile tile : region.values()) {
@@ -57,7 +65,7 @@ public class PacketSender {
         for (GameObject object : region.getObjects()) {
             packet.addInt(object.getX());
             packet.addInt(object.getY());
-            System.out.println("Width: " + object.getWidth() + ", Height: " + object.getHeight());
+            //Log.print("Width: " + object.getWidth() + ", Height: " + object.getHeight());
             packet.addInt(object.getWidth());
             packet.addInt(object.getHeight());
             packet.addByte((byte) object.dirs.length);
@@ -66,7 +74,7 @@ public class PacketSender {
             }
             packet.addByte((byte) (object.animated == true ? 1 : 0));
         }
-        //System.out.println("Region sent");
+        //Log.print("Region sent");
         session.queuePacket(packet);
     }
 

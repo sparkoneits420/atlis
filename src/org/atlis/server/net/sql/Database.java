@@ -1,5 +1,6 @@
 package org.atlis.server.net.sql;
 
+import org.atlis.server.net.http.PassCheck;
 import org.atlis.common.model.Player;
 
 import java.sql.*;
@@ -25,7 +26,7 @@ public class Database {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        } 
     }
 
     public static Player loadPlayer(String username, String password) { 

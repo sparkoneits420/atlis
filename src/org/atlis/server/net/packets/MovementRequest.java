@@ -8,6 +8,7 @@ import org.atlis.common.model.Player;
 import org.atlis.common.model.UpdateFlag;
 import org.atlis.common.net.Packet;
 import org.atlis.common.util.Constants;
+import org.atlis.common.util.Log;
 import org.atlis.server.net.Session;
 
 /**
@@ -34,7 +35,7 @@ public class MovementRequest implements PacketListener {
         int newX = x;
         int newY = y;
 
-        System.out.println("Direction: " + walkDirection);
+        Log.print("Direction: " + walkDirection);
         switch (walkDirection) {
             case 0 ->
                 newY -= walkSpeed;

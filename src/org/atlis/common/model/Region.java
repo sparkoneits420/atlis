@@ -4,18 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.atlis.common.util.Constants;
+import org.atlis.common.util.Log;
 import org.atlis.common.util.Utilities;
 
 public class Region extends HashMap<Long, Tile> {
 
-    public long id;
-    public boolean save = false;
-    public static final long serialVersionUID = 555L;
+    private long id;
     public ArrayList<GameObject> objects;
     public ArrayList<NPC> npcs;
 
     public Region(int x, int y) {
-        this.id = (((long) x << 32) | (y & 0xffffffffL));
+        this.id = ((long) Math.floorDiv(x, Constants.REGION_SIZE) << 32)
+                | (Math.floorDiv(y, Constants.REGION_SIZE) & 0xFFFFFFFFL);
         for (int j = (-(Constants.REGION_SIZE / 2));
                 j < Constants.REGION_SIZE / 2; j += 16) {
             for (int k = (-(Constants.REGION_SIZE / 2));
@@ -51,7 +51,7 @@ public class Region extends HashMap<Long, Tile> {
     }
 
     public boolean isTileBlocked(int x, int y, int w, int h) {
-        System.out.println("[CLIP] Region has " + objects.size() + " objects");
+        Log.print("[CLIP] Region has " + objects.size() + " objects");
         for (GameObject obj : objects) {
             if (!obj.isBlocking()) {
                 continue;
@@ -74,7 +74,7 @@ public class Region extends HashMap<Long, Tile> {
     }
 
     public final int getY() {
-        return ((int) (id & 0xffffffffL));
+        return (int) (id & 0xFFFFFFFFL);
     }
 
     public ArrayList<GameObject> getObjects() {
@@ -86,13 +86,12 @@ public class Region extends HashMap<Long, Tile> {
     }
 
     public boolean isVisible(Region center) {
-        int x = center.getX() - getX(), y = center.getY() - getY();
-        return x <= Constants.REGION_SIZE && x >= -Constants.REGION_SIZE
-                && y <= Constants.REGION_SIZE && y >= -Constants.REGION_SIZE;
+        int dx = Math.abs(center.getX() - getX());
+        int dy = Math.abs(center.getY() - getY());
+        return dx <= 1 && dy <= 1;
     }
 
     public void addObject(GameObject gameObject) {
         objects.add(gameObject);
     }
-
 }

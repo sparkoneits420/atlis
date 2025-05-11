@@ -1,4 +1,4 @@
-package org.atlis.editor.add;
+package org.atlis.mapeditorold.add;
 
 import org.atlis.common.tsk.Task;
 
@@ -11,9 +11,10 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.atlis.common.model.GameObject;
+import org.atlis.common.tsk.TaskPool;
 import org.atlis.common.util.Utilities;
-import org.atlis.editor.MapEditor;
-import org.atlis.editor.Screen;
+import org.atlis.mapeditorold.MapEditor;
+import org.atlis.mapeditorold.Screen;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -175,7 +176,7 @@ public class AddObject extends JFrame {
             Screen.objectToAdd = previewObject;
             Screen.addingObject = true;
             if (animationTask != null) {
-                MapEditor.getTaskPool().remove(animationTask);
+                TaskPool.remove(animationTask);
             }
             dispose();
         }
@@ -197,7 +198,7 @@ public class AddObject extends JFrame {
 
     private void startAnimation() {
         if (animationTask != null) {
-            MapEditor.getTaskPool().remove(animationTask);
+            TaskPool.remove(animationTask);
         }
 
         if (previewObject != null && previewObject.images != null && previewObject.images.length > 1) {
@@ -208,7 +209,7 @@ public class AddObject extends JFrame {
                     previewPanel.repaint();
                 }
             };
-            MapEditor.getTaskPool().add(animationTask);
+            TaskPool.add(animationTask);
         }
     }
 

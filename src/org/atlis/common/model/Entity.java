@@ -1,16 +1,19 @@
 package org.atlis.common.model;
 
 import java.util.Queue;
+import org.atlis.common.util.Constants;
+import org.atlis.common.util.Utilities;
 
 public class Entity {
 
-    public int x, y, z, width, height;
+    public int x = -50, y = -60, z, width, height;
     public long regionId;
     public Region region;
     public long id;
     public boolean animated, blocking = true;
     public Queue<UpdateFlag> updateFlags;
-    public int[] bounds; 
+    public int[] bounds;
+    public long lastRegionId;
 
     public Entity() {
         setBounds();
@@ -21,10 +24,14 @@ public class Entity {
         int nextY = this.y;
 
         switch (direction) {
-            case 0 -> nextY -= 1; 
-            case 1 -> nextX += 1; 
-            case 2 -> nextY += 1; 
-            case 3 -> nextX -= 1; 
+            case 0 ->
+                nextY -= 1;
+            case 1 ->
+                nextX += 1;
+            case 2 ->
+                nextY += 1;
+            case 3 ->
+                nextX -= 1;
             default -> {
                 return false; // invalid direction
             }
@@ -37,19 +44,42 @@ public class Entity {
         return !region.isTileBlocked(nextX, nextY, this.getWidth(), this.getHeight());
     }
 
+    public boolean regionChanged() {
+        if (region == null) {
+            return false;
+        }
+
+        long currentId = getCurrentRegionId();
+        long oldId = region.getId();
+
+        return currentId != oldId;
+    }
+
+    public long getCurrentRegionId() {
+        //Log.print("X: " + x + ", Y: " + y);
+        int regionSize = Constants.REGION_SIZE;
+
+        int regionX = Math.floorDiv(x, regionSize) * regionSize;
+        int regionY = Math.floorDiv(y, regionSize) * regionSize;
+        //Log.print("RegionX: " + regionX + " RegionY: " + regionY);
+        long l = Utilities.intsToLong(regionX, regionY);
+        //Log.print("RegionId: " + l);
+        return l;
+    }
+
     public boolean isBlocking() {
         return blocking;
     }
-    
+
     public void setBound(boolean blocking) {
         this.blocking = blocking;
     }
-    
+
     public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -90,6 +120,7 @@ public class Entity {
     }
 
     public void setRegionId(long regionId) {
+        lastRegionId = this.regionId;
         this.regionId = regionId;
     }
 
@@ -100,6 +131,10 @@ public class Entity {
 
     public void setRegion(Region region) {
         this.region = region;
+    }
+
+    public long getLastRegionId() {
+        return lastRegionId;
     }
 
     public Region getRegion() {

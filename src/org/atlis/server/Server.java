@@ -20,21 +20,17 @@ import org.atlis.common.util.Log;
 import org.atlis.server.net.sql.Database;
 
 public class Server {
-
-    public static Log log;
-    public static TaskPool taskPool;
+ 
     public static boolean running = true;
     public static ExecutorService executor = Executors.newCachedThreadPool();
     public static HashMap<Long, Region> cachedRegions;
     public static boolean webServerDown = true;
     public static final int MAX_REGIONS = 512;
 
-    public static void main(String[] args) {
-        log = new Log();
-        taskPool = new TaskPool();
-        executor.submit(taskPool);
+    public static void main(String[] args) { 
         cachedRegions = new HashMap<>();
         loadProperties(".properties");
+        TaskPool.start();
         try {
             start(); 
         } catch (Exception ex) {
@@ -50,7 +46,7 @@ public class Server {
             serverChannel.configureBlocking(false);
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            System.out.println("Server started on port " + Constants.PORT);
+            Log.print("Server started on port " + Constants.PORT);
 
             ByteBuffer buffer = ByteBuffer.allocate(Constants.BUFFER_SIZE);
 
@@ -91,15 +87,7 @@ public class Server {
 
     public static HashMap<Long, Region> getCachedRegions() {
         return cachedRegions;
-    }
-
-    public static TaskPool getTaskPool() {
-        return taskPool;
-    }
-
-    public static Log getLog() {
-        return log;
-    }
+    } 
 
     public static boolean isRunning() {
         return running;

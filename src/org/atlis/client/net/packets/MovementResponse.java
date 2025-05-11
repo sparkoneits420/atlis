@@ -15,7 +15,7 @@ public class MovementResponse implements PacketListener {
     @Override
     public void handle(Packet p, Session session) {
         boolean collision = p.getBoolean();
-        System.out.println("Collision response sent by server: " + collision);
+        //Log.print("Collision response sent by server: " + collision);
         session.getPlayer().collision = collision;
     }
 }

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable; 
 import org.atlis.client.Client;
+import org.atlis.common.util.Log;
 import org.atlis.common.util.Utilities;
 
 public class Animation implements Serializable {
@@ -48,7 +49,7 @@ public class Animation implements Serializable {
                     images[i] = image;
                 }
             }catch (IOException ex) {
-                Client.getLog().put(ex.getMessage());
+                Log.print(ex.getMessage());
             }
         }
     }

@@ -1,0 +1,2 @@
+[8:38 PM - May 10 2025]: 
+{Server started on port 5050}
