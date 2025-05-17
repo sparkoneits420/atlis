@@ -12,8 +12,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import org.atlis.common.util.Log;
 
 public class Screen extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
 
@@ -21,10 +24,10 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
 
     public final HashMap<Long, Region> cachedRegions = new HashMap<>();
     public final java.util.Set<Long> modifiedRegionIds = new java.util.HashSet<>();
-    public final java.util.Deque<Runnable> undoStack = new java.util.ArrayDeque<>();
-    public final java.util.Deque<Runnable> redoStack = new java.util.ArrayDeque<>();
+    public final Deque<Runnable> undoStack = new ArrayDeque<>();
+    public final Deque<Runnable> redoStack = new ArrayDeque<>();
     public final int MAX_HISTORY = 15;
-    public int cameraX = 0, cameraY = 0;
+    public int x = 0, y = 0;
     public int tileSize = 16;
 
     public boolean up, down, left, right;
@@ -38,12 +41,19 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
     public boolean placingObject = false;
 
     public Screen() {
-        setFocusable(true);
-        setDoubleBuffered(true);
+        setFocusable(true); 
         addKeyListener(this);
         addMouseListener(this);
-        addMouseMotionListener(this);
-
+        addMouseMotionListener(this); 
+       
+        TaskPool.start();
+        TaskPool.add(new Task(50) {
+            @Override
+            public void execute() {
+                repaint();
+                requestFocus();
+            }
+        });
         TaskPool.add(new Task(16) {
             @Override
             public void execute() {
@@ -51,21 +61,20 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
                 if (now - lastMoveTime >= 16) {
                     int speed = Math.min(12, 2 + holdCounter / 10);
                     if (up) {
-                        cameraY -= speed;
+                        y -= speed;
                     }
                     if (down) {
-                        cameraY += speed;
+                        y += speed;
                     }
                     if (left) {
-                        cameraX -= speed;
+                        x -= speed;
                     }
                     if (right) {
-                        cameraX += speed;
+                        x += speed;
                     }
 
                     if (up || down || left || right) {
-                        holdCounter++;
-                        repaint();
+                        holdCounter++; 
                     } else {
                         holdCounter = 0;
                     }
@@ -76,86 +85,116 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         });
     }
 
-    public void loadVisibleRegions() {
-        int screenW = getWidth();
-        int screenH = getHeight();
-
-        int xStart = cameraX;
-        int yStart = cameraY;
-        int xEnd = cameraX + screenW;
-        int yEnd = cameraY + screenH;
-
+    public long getCurrentRegionId() {
+        //Log.print("X: " + x + ", Y: " + y);
         int regionSize = Constants.REGION_SIZE;
-        int rxStart = Math.floorDiv(xStart, regionSize) * regionSize;
-        int ryStart = Math.floorDiv(yStart, regionSize) * regionSize;
-        int rxEnd = Math.floorDiv(xEnd, regionSize) * regionSize;
-        int ryEnd = Math.floorDiv(yEnd, regionSize) * regionSize;
 
-        for (int x = rxStart; x <= rxEnd; x += regionSize) {
-            for (int y = ryStart; y <= ryEnd; y += regionSize) {
-                long id = Utilities.intsToLong(x, y);
+        int regionX = Math.floorDiv(x, regionSize) * regionSize;
+        int regionY = Math.floorDiv(y, regionSize) * regionSize;
+        //Log.print("RegionX: " + regionX + " RegionY: " + regionY);
+        long l = Utilities.intsToLong(regionX, regionY);
+        //Log.print("RegionId: " + l);
+        return l;
+    }
+
+    public void loadVisibleRegions() {
+        int regionSize = Constants.REGION_SIZE;
+
+        // Align camera to region grid
+        int centerRegionX = Math.floorDiv(x + getWidth() / 2, regionSize) * regionSize;
+        int centerRegionY = Math.floorDiv(y + getHeight() / 2, regionSize) * regionSize;
+
+        // Load surrounding regions (3x3 grid)
+        for (int dx = -regionSize; dx <= regionSize; dx += regionSize) {
+            for (int dy = -regionSize; dy <= regionSize; dy += regionSize) {
+                int rx = centerRegionX + dx;
+                int ry = centerRegionY + dy;
+                long id = Utilities.intsToLong(rx, ry);
                 loadOrCreateRegion(id);
             }
         }
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+    protected void paintComponent(Graphics g) {  
+        Graphics2D g2 = (Graphics2D) g; 
+        // Center camera before drawing
+        loadVisibleRegions();
         drawRegions(g2);
 
+        // Highlight tile under mouse cursor
         if (hoverX >= 0 && hoverY >= 0) {
+            int px = hoverX * tileSize - x;
+            int py = hoverY * tileSize - y;
             g2.setColor(Color.YELLOW);
-            g2.drawRect(hoverX * tileSize - cameraX, hoverY * tileSize - cameraY, tileSize, tileSize);
+            g2.drawRect(px, py, tileSize, tileSize);
         }
 
+        // Draw selected tiles overlay
+        g2.setColor(Color.YELLOW);
         for (Tile tile : selectedTiles.values()) {
-            int drawX = tile.getX() - cameraX;
-            int drawY = tile.getY() - cameraY;
-            g2.setColor(Color.CYAN);
+            if (tile == null) {
+                continue;
+            }
+            int drawX = tile.getX() - x;
+            int drawY = tile.getY() - y;
             g2.drawRect(drawX, drawY, tileSize, tileSize);
         }
 
-        if (previewObject != null && previewObject.images != null && previewObject.images.length > 0) {
-            int px = hoverX * tileSize - cameraX;
-            int py = hoverY * tileSize - cameraY;
+        // Draw object preview if one is selected
+        if (previewObject != null
+                && previewObject.images != null
+                && previewObject.images.length > 0
+                && previewObject.images[previewObject.currentImageSlot] != null) {
+
+            int px = hoverX * tileSize - x;
+            int py = hoverY * tileSize - y;
             g2.drawImage(previewObject.images[previewObject.currentImageSlot], px, py, null);
-        }
+        } 
     }
 
     public void drawRegions(Graphics2D g2) {
-        for (Region region : cachedRegions.values()) {
-            
+        
+        Region[] temp = new Region[cachedRegions.size()];
+        cachedRegions.values().toArray(temp);
+        for (Region region : temp) {
+            if (region == null) {
+                Log.print("Warning: Skipped null region.");
+                continue;
+            }
+
             // --- Draw Tiles ---
             for (Tile tile : region.values()) {
-                int drawX = tile.getX() - cameraX;
-                int drawY = tile.getY() - cameraY;
+                if (tile == null || tile.getImage() == null) {
+                    Log.print("Warning: Skipped null tile or tile with null image in region " + region.getId());
+                    continue;
+                }
 
-                g2.drawImage(tile.getImage(), drawX, drawY, this); 
+                int drawX = tile.getX() - x;
+                int drawY = tile.getY() - y;
+                g2.drawImage(tile.getImage(), drawX, drawY, this);
             }
 
             // --- Draw GameObjects ---
             for (GameObject obj : region.getObjects()) {
-                int drawX = obj.getX() * tileSize - cameraX;
-                int drawY = obj.getY() * tileSize - cameraY;
-
-                if (obj.images != null && obj.images.length > 0) {
-                    g2.drawImage(obj.images[obj.currentImageSlot], drawX, drawY, null);
-                } else {
-                    // Fallback visual for missing image
-                    g2.setColor(Color.RED);
-                    g2.fillRect(drawX, drawY, obj.getWidth() * tileSize, obj.getHeight() * tileSize);
+                if (obj == null) {
+                    Log.print("Warning: Null GameObject in region " + region.getId());
+                    continue;
                 }
+
+                int drawX = obj.getX() * tileSize - x;
+                int drawY = obj.getY() * tileSize - y;
+
+                if (obj.images != null && obj.images.length > 0 && obj.images[obj.currentImageSlot] != null) {
+                    g2.drawImage(obj.images[obj.currentImageSlot], drawX, drawY, null);
+                } 
             }
         }
     }
 
     public void centerCamera(int x, int y) {
-        this.cameraX = x - getWidth() / 2;
-        this.cameraY = y - getHeight() / 2;
+        this.x = x - getWidth() / 2;
+        this.y = y - getHeight() / 2;
         repaint();
     }
 
@@ -163,9 +202,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
         if (!cachedRegions.containsKey(id)) {
             Region region = (Region) XMLPersistence.loadXML(Constants.CACHE_DIR + "/mapdata/" + id + ".xml");
             if (region == null) {
-                int x = (int) (id >> 32);
-                int y = (int) id;
-                region = new Region(x, y);
+                region = new Region(id);
+                //XMLPersistence.saveXML(region);
             }
             cachedRegions.put(id, region);
         }
@@ -226,8 +264,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        int worldX = e.getX() + cameraX;
-        int worldY = e.getY() + cameraY;
+        int worldX = e.getX() + x;
+        int worldY = e.getY() + y;
         hoverX = worldX / tileSize;
         hoverY = worldY / tileSize;
         repaint();
@@ -246,8 +284,8 @@ public class Screen extends JPanel implements KeyListener, MouseListener, MouseM
             repaint();
             return;
         }
-        int worldX = e.getX() + cameraX;
-        int worldY = e.getY() + cameraY;
+        int worldX = e.getX() + x;
+        int worldY = e.getY() + y;
         int tx = worldX / tileSize;
         int ty = worldY / tileSize;
 

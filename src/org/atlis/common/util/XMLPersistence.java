@@ -27,8 +27,10 @@ public class XMLPersistence {
             if (!file.exists()) {
                 file.createNewFile();
             }
+            String[] sa = new String[strings.size()];
+            strings.toArray(sa);
             try (FileOutputStream out = new FileOutputStream(file)) {
-                for (String s : strings) {
+                for (String s : sa) {
                     out.write(s.getBytes());
                     out.write('\n');
                 }

@@ -1,4 +1,0 @@
-[8:31 PM - Apr 26 2025]: 
-{Login response opcode: 2}
-{Login response opcode: 2}
-{Connection refused: server offline!}

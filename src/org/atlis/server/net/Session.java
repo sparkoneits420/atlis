@@ -59,6 +59,7 @@ public class Session extends Task {
 
             while (!outgoingPacketQueue.isEmpty()) {
                 PacketBuilder pb = outgoingPacketQueue.poll();
+                if(pb == null) continue;
                 Log.print("Attempting to handle outgoing packet: " + pb.opcode);
                 byte[] packetData = pb.toPacket();
                 ByteBuffer buffer = ByteBuffer.wrap(packetData);
@@ -75,7 +76,7 @@ public class Session extends Task {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.print("IOException:", e);
             close();
         }
     }
@@ -297,9 +298,9 @@ public class Session extends Task {
                 }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) { 
             Log.print("Session dropped for " + player.getUsername());
+            Log.print("Session exception: ", e);
             close();
         }
     }

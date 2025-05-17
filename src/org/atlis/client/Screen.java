@@ -17,6 +17,7 @@ import org.atlis.client.ui.LoginScreen;
 
 import java.awt.Font;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.util.List; 
 import org.atlis.client.ui.ChatInterface;
 import org.atlis.common.model.GameObject;
@@ -93,8 +94,8 @@ public class Screen extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                     RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY);
-
+                    RenderingHints.VALUE_RENDER_QUALITY); 
+             
             if (player.requiresRegionalUpdate()) {
                 List<Long> visible = player.getVisibleRegions();
 
@@ -135,8 +136,7 @@ public class Screen extends JPanel {
                 }
             }
 
-            if (player == null
-                    || player.getRegion() == null) {
+            if (player.getRegion() == null) {
                 return;
             }
             
@@ -189,6 +189,7 @@ public class Screen extends JPanel {
             // chat.paint(g2);
         }
         g.drawImage(image, 0, 0, this);
+        g2.dispose();
     }
 
     public void setSession(Session session) {

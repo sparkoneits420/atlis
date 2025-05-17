@@ -49,33 +49,7 @@ public class Player extends Entity {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-    }
-
-    public void sgenerateSurroundingRegions() {
-        List<Long> visibleRegions = getVisibleRegions(); 
-       // Log.print(Arrays.toString(visibleRegions.toArray()));
-        for (long rid : visibleRegions) {
-            //Log.print(rid);
-            Region aRegion = currentRegions.get(rid);
-            if (aRegion == null) {
-                aRegion = (Region) XMLPersistence.loadXML(Constants.CACHE_DIR + "/mapdata/" + rid + ".xml");
-                if (aRegion == null) {
-                    Log.print("Region MISSING: " + rid);
-                    continue;
-                }
-                currentRegions.putIfAbsent(aRegion.getId(), aRegion); 
-            }
-        }
- 
-        // Set player's current region
-        long currentRegionId = getCurrentRegionId();
-        Region currentRegion = currentRegions.get(currentRegionId);
-        if (currentRegion != null) {
-            this.region = currentRegion;
-        } else {
-            Log.print("Warning: Current region not found in cache: " + currentRegionId);
-        }
-    }
+    } 
 
     public List<Long> getVisibleRegions() {
         List<Long> visible = new ArrayList<>();

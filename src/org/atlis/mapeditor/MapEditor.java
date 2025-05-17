@@ -151,9 +151,16 @@ public class MapEditor extends JFrame implements KeyListener, MouseListener, Mou
         });
     }
 
-    @Override public void keyTyped(KeyEvent e) {}
-    @Override public void keyPressed(KeyEvent e) {}
-    @Override public void keyReleased(KeyEvent e) {}
+    @Override public void keyTyped(KeyEvent e) {
+        canvas.keyTyped(e);
+    }
+    @Override public void keyPressed(KeyEvent e) {
+        //handle hotkey
+        canvas.keyPressed(e);
+    }
+    @Override public void keyReleased(KeyEvent e) {
+        canvas.keyReleased(e);
+    }
     @Override public void mouseClicked(MouseEvent e) {}
     @Override public void mousePressed(MouseEvent e) {}
     @Override public void mouseReleased(MouseEvent e) {}
